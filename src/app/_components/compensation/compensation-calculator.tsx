@@ -14,6 +14,8 @@ import { SummaryPanel } from "./summary-panel";
 import { getDefaultFormValues } from "./defaults";
 import { compensationFormSchema, type CompensationFormValues } from "./schema";
 import { useCompensationSummary } from "./use-compensation-summary";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
 
 type SubmissionStatus = "idle" | "success" | "error";
 
@@ -57,22 +59,20 @@ const CalculatorContent = ({
         <RsuSection />
         <EsppSection />
         <RaisesSection />
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur">
-          <div className="text-sm text-white/70">
-            {status === "success" && errorCount === 0
-              ? "Snapshot updated. Charts reflect the latest calculation."
-              : status === "error"
-                ? "Review highlighted fields to complete calculation."
-                : "Press calculate to validate inputs and capture a snapshot."}
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-full border border-white/20 bg-blue-500/90 px-6 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Calculating..." : "Calculate Total Compensation"}
-          </button>
-        </div>
+        <Card className="border border-border/60 bg-card/80">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <p className="text-sm text-muted-foreground">
+              {status === "success" && errorCount === 0
+                ? "Snapshot updated. Charts reflect the latest calculation."
+                : status === "error"
+                  ? "Review highlighted fields to complete calculation."
+                  : "Press calculate to validate inputs and capture a snapshot."}
+            </p>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Calculating..." : "Calculate Total Compensation"}
+            </Button>
+          </CardContent>
+        </Card>
       </form>
       <SummaryPanel summary={summary} status={status} errorCount={errorCount} />
     </div>

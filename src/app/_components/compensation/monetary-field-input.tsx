@@ -5,6 +5,15 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { currencyOptions } from "./constants";
 import type { CompensationFormValues } from "./schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 type MonetaryFieldInputProps = {
   amountName: FieldPath<CompensationFormValues>;
@@ -24,54 +33,43 @@ export const MonetaryFieldInput = ({
   const { control } = useFormContext<CompensationFormValues>();
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-semibold text-slate-900 dark:text-white">{label}</label>
-        {description ? (
-          <span
-            className="text-xs text-slate-500 dark:text-white/60"
-            title={description}
-            aria-label={description}
-          >
-            ⓘ
-          </span>
-        ) : null}
-      </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-base">{label}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
+      </CardHeader>
+      <CardContent className="grid gap-4 md:grid-cols-3">
         <Controller
           control={control}
           name={amountName}
           render={({ field }) => {
-            const { value, onChange, ...rest } = field;
             const resolvedValue =
-              typeof value === "number"
-                ? value
-                : typeof value === "string"
-                  ? value
+              typeof field.value === "number"
+                ? field.value
+                : typeof field.value === "string"
+                  ? field.value
                   : "";
 
             return (
-              <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-white/70">
-                  Amount
-                </span>
-                <input
-                  {...rest}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</p>
+                <Input
+                  {...field}
                   value={resolvedValue}
                   onChange={(event) => {
                     const rawValue = event.target.value;
                     if (rawValue === "") {
-                      onChange(undefined);
+                      field.onChange(undefined);
                       return;
                     }
 
                     const numeric = Number(rawValue);
-                    onChange(Number.isNaN(numeric) ? undefined : numeric);
+                    field.onChange(Number.isNaN(numeric) ? undefined : numeric);
                   }}
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 dark:border-white/20 dark:bg-white/10 dark:text-white dark:focus:border-white/60"
                 />
               </div>
             );
@@ -81,26 +79,25 @@ export const MonetaryFieldInput = ({
           control={control}
           name={currencyName}
           render={({ field }) => (
-            <div className="flex flex-col gap-1">
-              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-white/70">
-                Currency
-              </span>
-              <select
-                name={field.name}
-                ref={field.ref}
-                onBlur={field.onBlur}
-                value={typeof field.value === "string" ? field.value : ""}
-                onChange={(event) => {
-                  field.onChange(event.target.value);
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Currency</p>
+              <Select
+                value={typeof field.value === "string" ? field.value : preferredFallback(field.value)}
+                onValueChange={(value) => {
+                  field.onChange(value);
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none transition focus:border-slate-500 dark:border-white/20 dark:bg-white/10 dark:text-white dark:focus:border-white/60"
               >
-                {currencyOptions.map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((currency) => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         />
@@ -108,41 +105,42 @@ export const MonetaryFieldInput = ({
           control={control}
           name={overrideName}
           render={({ field }) => {
-            const { value, onChange, ...rest } = field;
             const resolvedValue =
-              typeof value === "number" || typeof value === "string"
-                ? value
+              typeof field.value === "number" || typeof field.value === "string"
+                ? field.value
                 : "";
 
             return (
-              <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-white/70">
-                  Override Rate
-                </span>
-                <input
-                  {...rest}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Override rate
+                </p>
+                <Input
+                  {...field}
                   value={resolvedValue}
                   onChange={(event) => {
                     const rawValue = event.target.value;
                     if (rawValue === "") {
-                      onChange(undefined);
+                      field.onChange(undefined);
                       return;
                     }
 
                     const numeric = Number(rawValue);
-                    onChange(Number.isNaN(numeric) ? undefined : numeric);
+                    field.onChange(Number.isNaN(numeric) ? undefined : numeric);
                   }}
                   type="number"
+                  inputMode="decimal"
                   step="0.0001"
                   min="0"
                   placeholder="Use default"
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-500 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 dark:focus:border-white/60"
                 />
               </div>
             );
           }}
         />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
+
+const preferredFallback = (value: unknown) => (typeof value === "string" ? value : "");

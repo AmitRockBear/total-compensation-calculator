@@ -2,94 +2,133 @@
 
 import { currencyOptions } from "./constants";
 import { useCompensationSettings } from "./context";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 
 export const GlobalSettings = () => {
-  const { preferredCurrency, setPreferredCurrency, defaultRates, updateRate, theme, toggleTheme } =
-    useCompensationSettings();
+  const {
+    preferredCurrency,
+    setPreferredCurrency,
+    defaultRates,
+    updateRate,
+    theme,
+    setThemeMode,
+  } = useCompensationSettings();
 
   return (
-    <section className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-2xl backdrop-blur transition dark:border-white/10 dark:bg-white/10">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Global Settings</h2>
-          <p className="text-sm text-slate-600 dark:text-white/70">
+    <Card className="border-dashed">
+      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-2">
+          <CardTitle>Global Settings</CardTitle>
+          <CardDescription>
             Configure your output currency, manage baseline exchange rates, and toggle theme preferences.
-          </p>
+          </CardDescription>
         </div>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="rounded-full border border-slate-300/80 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:border-white/40 dark:hover:bg-white/20 dark:focus-visible:outline-white"
-          aria-label="Toggle theme"
-        >
-          {theme === "light" ? "Switch to Dark" : "Switch to Light"}
-        </button>
-      </header>
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
-            Desired Output Currency
-          </h3>
-          <select
-            value={preferredCurrency}
-            onChange={(event) => {
-              setPreferredCurrency(event.target.value as typeof preferredCurrency);
+        <div className="flex items-center gap-3">
+          <Label htmlFor="theme-toggle" className="text-sm">
+            Dark mode
+          </Label>
+          <Switch
+            id="theme-toggle"
+            checked={theme === "dark"}
+            onCheckedChange={(checked) => {
+              setThemeMode(checked ? "dark" : "light");
             }}
-            className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition hover:border-slate-400 focus:border-slate-500 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:border-white/40 dark:focus:border-white/60"
+            aria-label="Toggle theme"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setThemeMode(theme === "light" ? "dark" : "light");
+            }}
           >
-            {currencyOptions.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency}
-              </option>
-            ))}
-          </select>
+            {theme === "light" ? "Switch to dark" : "Switch to light"}
+          </Button>
         </div>
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">Live Insights</h3>
-          <p className="mt-3 text-sm text-slate-600 dark:text-white/70">
-            Calculations and visualizations update instantly as you edit values. Use the Calculate button to validate inputs
-            and capture a shareable snapshot.
-          </p>
-          <p
-            className="mt-2 text-xs text-slate-500 dark:text-white/60"
-            aria-label="Exchange rate note"
-            title="Exchange rates are relative to USD by default."
-          >
-            Exchange rates default to USD parity. Override any field to reflect negotiated or real-time rates.
-          </p>
-        </div>
-      </div>
-      <div className="mt-8">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
-          Default Exchange Rates
-        </h3>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {currencyOptions.map((currency) => (
-            <label
-              key={currency}
-              className="flex flex-col gap-1 rounded-xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-700 shadow-inner transition dark:border-white/10 dark:bg-white/5 dark:text-white/70"
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
+              Desired output currency
+            </Label>
+            <Select
+              value={preferredCurrency}
+              onValueChange={(value) => {
+                setPreferredCurrency(value as typeof preferredCurrency);
+              }}
             >
-              <span className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-500 dark:text-white/60">
-                <span>{currency}</span>
-                <span title="Default exchange rate relative to USD" aria-label="Default exchange rate relative to USD">
-                  ↔ USD
-                </span>
-              </span>
-              <input
-                value={defaultRates[currency] ?? ""}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  updateRate(currency, Number.isNaN(value) ? defaultRates[currency] : value);
-                }}
-                type="number"
-                step="0.0001"
-                min="0"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none transition hover:border-slate-400 focus:border-slate-500 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:border-white/40 dark:focus:border-white/60"
-              />
-            </label>
-          ))}
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencyOptions.map((currency) => (
+                  <SelectItem key={currency} value={currency}>
+                    {currency}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
+              Live insights
+            </Label>
+            <p className="text-sm text-slate-600 dark:text-white/70">
+              Calculations and visualizations update instantly as you edit values. Use the calculate button to validate inputs
+              and capture a shareable snapshot.
+            </p>
+            <p
+              className="text-xs text-slate-500 dark:text-white/60"
+              aria-label="Exchange rate note"
+              title="Exchange rates are relative to USD by default."
+            >
+              Exchange rates default to USD parity. Override any field to reflect negotiated or real-time rates.
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+        <div>
+          <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
+            Default exchange rates
+          </Label>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {currencyOptions.map((currency) => (
+              <div
+                key={currency}
+                className="flex flex-col gap-2 rounded-xl border border-slate-200/70 bg-white/90 px-4 py-3 shadow-inner transition dark:border-white/10 dark:bg-white/5"
+              >
+                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-500 dark:text-white/60">
+                  <span>{currency}</span>
+                  <span title="Default exchange rate relative to USD" aria-label="Default exchange rate relative to USD">
+                    ↔ USD
+                  </span>
+                </div>
+                <Input
+                  value={defaultRates[currency] ?? ""}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    updateRate(currency, Number.isNaN(value) ? defaultRates[currency] : value);
+                  }}
+                  type="number"
+                  step="0.0001"
+                  min="0"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useMemo, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { CurrencyCode, defaultExchangeRates } from "./constants";
 
@@ -19,6 +14,7 @@ type CompensationSettingsContextValue = {
   updateRate: (currency: CurrencyCode, value: number) => void;
   theme: "light" | "dark";
   toggleTheme: () => void;
+  setThemeMode: (mode: "light" | "dark") => void;
 };
 
 const CompensationSettingsContext =
@@ -35,17 +31,8 @@ export const CompensationSettingsProvider = ({
   const [defaultRates, setDefaultRates] = useState<ExchangeRates>(
     defaultExchangeRates,
   );
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
+  const { resolvedTheme, setTheme } = useTheme();
+  const theme = resolvedTheme === "dark" ? "dark" : "light";
 
   const value = useMemo<CompensationSettingsContextValue>(() => ({
     preferredCurrency,
@@ -59,9 +46,12 @@ export const CompensationSettingsProvider = ({
     },
     theme,
     toggleTheme: () => {
-      setTheme((previous) => (previous === "light" ? "dark" : "light"));
+      setTheme(theme === "light" ? "dark" : "light");
     },
-  }), [preferredCurrency, defaultRates, theme]);
+    setThemeMode: (mode) => {
+      setTheme(mode);
+    },
+  }), [defaultRates, preferredCurrency, setTheme, theme]);
 
   return (
     <CompensationSettingsContext.Provider value={value}>
