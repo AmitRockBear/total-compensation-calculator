@@ -1,4 +1,3 @@
-
 import { createContext, useContext } from "react";
 
 // TanStack Form's ReactFormExtendedApi type requires 12 complex generic parameters
@@ -8,6 +7,14 @@ import { createContext, useContext } from "react";
 // 3. This avoids type compatibility issues between TanStack Form versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CompensationFormApi = any;
+
+// Type for form field callbacks to avoid repeating the type annotation
+export type FormFieldCallback = {
+  name: string;
+  state: { value: unknown };
+  handleChange: (value: unknown) => void;
+  handleBlur: () => void;
+};
 
 export const FormContext = createContext<CompensationFormApi | null>(null);
 
@@ -20,7 +27,7 @@ export const useFormContext = (): CompensationFormApi => {
 };
 
 // Helper type for field names - extracts all valid paths from the form values
-export type CompensationFieldName = 
+export type CompensationFieldName =
   | "recurring"
   | "recurring.base"
   | "recurring.base.amount"

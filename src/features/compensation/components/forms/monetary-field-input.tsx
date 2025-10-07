@@ -1,5 +1,5 @@
 
-import { useFormContext, type CompensationFieldName } from "~/features/compensation/components/forms/form-context";
+import { useFormContext } from "~/features/compensation/components/forms/form-context";
 import { currencyOptions, type CurrencyCode } from "~/features/compensation/lib/constants";
 import {
   Card,
@@ -18,9 +18,9 @@ import {
 } from "~/components/ui/select";
 
 type MonetaryFieldInputProps = {
-  readonly amountName: CompensationFieldName;
-  readonly currencyName: CompensationFieldName;
-  readonly overrideName: CompensationFieldName;
+  readonly amountName: string;
+  readonly currencyName: string;
+  readonly overrideName: string;
   readonly label: string;
   readonly description?: string;
 };

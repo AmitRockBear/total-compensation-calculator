@@ -1,4 +1,4 @@
-import { useFormContext } from "~/features/compensation/components/forms/form-context";
+import { useFormContext, type FormFieldCallback } from "~/features/compensation/components/forms/form-context";
 import type { RaiseValues } from "~/features/compensation/types/schema";
 import { Button } from "~/components/ui/button";
 import {
@@ -44,7 +44,7 @@ export const RaisesSection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <form.Field name="raises" mode="array">
-          {(_field: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+          {(_field: FormFieldCallback) => {
             return raises.map((_raise: RaiseValues, index: number) => (
               <Card
                 key={index}
@@ -71,7 +71,7 @@ export const RaisesSection = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <form.Field name={`raises[${index}].yearOffset`}>
-                    {(yearField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                    {(yearField: FormFieldCallback) => {
                       const value = typeof yearField.state.value === "number" || typeof yearField.state.value === "string" ? yearField.state.value : "";
                       return (
                         <div className="space-y-2">
@@ -95,7 +95,7 @@ export const RaisesSection = () => {
                     }}
                   </form.Field>
                   <form.Field name={`raises[${index}].percentage`}>
-                    {(percentageField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                    {(percentageField: FormFieldCallback) => {
                       const value = typeof percentageField.state.value === "number" || typeof percentageField.state.value === "string" ? percentageField.state.value : "";
                       return (
                         <div className="space-y-2">

@@ -1,5 +1,5 @@
 import { useCompensationSettings } from "~/features/compensation/components/context";
-import { useFormContext } from "~/features/compensation/components/forms/form-context";
+import { useFormContext, type FormFieldCallback } from "~/features/compensation/components/forms/form-context";
 import type { RsuGrantValues } from "~/features/compensation/types/schema";
 import { currencyOptions, type CurrencyCode } from "~/features/compensation/lib/constants";
 import { Button } from "~/components/ui/button";
@@ -60,7 +60,7 @@ export const RsuSection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <form.Field name="rsuGrants" mode="array">
-          {(_field) => {
+          {(_field: FormFieldCallback) => {
             return grants.map((_grant: RsuGrantValues, index: number) => (
               <Card
                 key={index}
@@ -92,71 +92,80 @@ export const RsuSection = () => {
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-3">
                     <form.Field name={`rsuGrants[${index}].name`}>
-                      {(subField) => (
-                        <div className="space-y-2">
-                          <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                            Grant Name
-                          </label>
-                          <Input
-                            name={subField.name}
-                            value={subField.state.value}
-                            onBlur={subField.handleBlur}
-                            onChange={(e) =>
-                              subField.handleChange(e.target.value)
-                            }
-                            type="text"
-                            aria-label="Grant name"
-                            placeholder="e.g., Initial Grant"
-                          />
-                        </div>
-                      )}
+                      {(subField: FormFieldCallback) => {
+                        const value = typeof subField.state.value === "string" ? subField.state.value : "";
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Grant Name
+                            </label>
+                            <Input
+                              name={subField.name}
+                              value={value}
+                              onBlur={subField.handleBlur}
+                              onChange={(e) =>
+                                subField.handleChange(e.target.value)
+                              }
+                              type="text"
+                              aria-label="Grant name"
+                              placeholder="e.g., Initial Grant"
+                            />
+                          </div>
+                        );
+                      }}
                     </form.Field>
                     <form.Field name={`rsuGrants[${index}].vestingYears`}>
-                      {(subField) => (
-                        <div className="space-y-2">
-                          <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                            Vesting Years
-                          </label>
-                          <Input
-                            name={subField.name}
-                            value={subField.state.value}
-                            onBlur={subField.handleBlur}
-                            onChange={(e) =>
-                              subField.handleChange(Number(e.target.value))
-                            }
-                            type="number"
-                            inputMode="numeric"
-                            min="1"
-                            step="1"
-                            aria-label="Vesting duration in years"
-                            placeholder="4"
-                          />
-                        </div>
-                      )}
+                      {(subField: FormFieldCallback) => {
+                        const value = typeof subField.state.value === "number" || typeof subField.state.value === "string" ? subField.state.value : "";
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Vesting Years
+                            </label>
+                            <Input
+                              name={subField.name}
+                              value={value}
+                              onBlur={subField.handleBlur}
+                              onChange={(e) =>
+                                subField.handleChange(Number(e.target.value))
+                              }
+                              type="number"
+                              inputMode="numeric"
+                              min="1"
+                              step="1"
+                              aria-label="Vesting duration in years"
+                              placeholder="4"
+                            />
+                          </div>
+                        );
+                      }}
                     </form.Field>
                     <form.Field name={`rsuGrants[${index}].startDate`}>
-                      {(subField) => (
-                        <div className="space-y-2">
-                          <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                            Start Date
-                          </label>
-                          <Input
-                            name={subField.name}
-                            value={subField.state.value}
-                            onBlur={subField.handleBlur}
-                            onChange={(e) =>
-                              subField.handleChange(e.target.value)
-                            }
-                            type="date"
-                            aria-label="Grant start date"
-                          />
-                        </div>
-                      )}
+                      {(subField: FormFieldCallback) => {
+                        const value = typeof subField.state.value === "string" ? subField.state.value : "";
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Start Date
+                            </label>
+                            <Input
+                              name={subField.name}
+                              value={value}
+                              onBlur={subField.handleBlur}
+                              onChange={(e) =>
+                                subField.handleChange(e.target.value)
+                              }
+                              type="date"
+                              aria-label="Grant start date"
+                            />
+                          </div>
+                        );
+                      }}
                     </form.Field>
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <form.Field name={`rsuGrants[${index}].totalValue.amount`}>
-                      {(field: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(field: FormFieldCallback) => {
                         const fieldValue = field.state.value;
                         const resolvedValue = typeof fieldValue === "number" ? String(fieldValue) : "";
 
@@ -190,7 +199,7 @@ export const RsuSection = () => {
                       }}
                     </form.Field>
                     <form.Field name={`rsuGrants[${index}].totalValue.currency`}>
-                      {(field: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(field: FormFieldCallback) => {
                         const fieldValue = field.state.value;
                         const currencyValue = typeof fieldValue === "string" ? fieldValue : "USD";
                         
@@ -221,7 +230,7 @@ export const RsuSection = () => {
                       }}
                     </form.Field>
                     <form.Field name={`rsuGrants[${index}].totalValue.overrideRate`}>
-                      {(field: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(field: FormFieldCallback) => {
                         const fieldValue = field.state.value;
                         const resolvedValue = typeof fieldValue === "number" ? String(fieldValue) : "";
 

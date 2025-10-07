@@ -1,7 +1,7 @@
 'use client';
 
 import { useCompensationSettings } from "~/features/compensation/components/context";
-import { useFormContext } from "~/features/compensation/components/forms/form-context";
+import { useFormContext, type FormFieldCallback } from "~/features/compensation/components/forms/form-context";
 import type { EsppPlanValues } from "~/features/compensation/types/schema";
 import { currencyOptions, type CurrencyCode } from "~/features/compensation/lib/constants";
 import { Button } from "~/components/ui/button";
@@ -60,7 +60,7 @@ export const EsppSection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <form.Field name="esppPlans" mode="array">
-          {(_field: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+          {(_field: FormFieldCallback) => {
             return plans.map((_plan: EsppPlanValues, index: number) => (
               <Card
                 key={index}
@@ -92,7 +92,7 @@ export const EsppSection = () => {
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-3">
                     <form.Field name={`esppPlans[${index}].name`}>
-                      {(subField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(subField: FormFieldCallback) => {
                         const value = typeof subField.state.value === "string" ? subField.state.value : "";
                         return (
                           <div className="space-y-2">
@@ -113,7 +113,7 @@ export const EsppSection = () => {
                       }}
                     </form.Field>
                     <form.Field name={`esppPlans[${index}].startDate`}>
-                      {(subField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(subField: FormFieldCallback) => {
                         const value = typeof subField.state.value === "string" ? subField.state.value : "";
                         return (
                           <div className="space-y-2">
@@ -133,7 +133,7 @@ export const EsppSection = () => {
                       }}
                     </form.Field>
                     <form.Field name={`esppPlans[${index}].durationMonths`}>
-                      {(subField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+                      {(subField: FormFieldCallback) => {
                         const value = typeof subField.state.value === "number" || typeof subField.state.value === "string" ? subField.state.value : "";
                         return (
                           <div className="space-y-2">
@@ -159,7 +159,7 @@ export const EsppSection = () => {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <form.Field name={`esppPlans[${index}].contributionPercentage`}>
-            {(contributionField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+            {(contributionField: FormFieldCallback) => {
               const fieldValue = contributionField.state.value;
               const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
               
@@ -200,7 +200,7 @@ export const EsppSection = () => {
             }}
           </form.Field>
                     <form.Field name={`esppPlans[${index}].growthPercentage`}>
-            {(growthField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+            {(growthField: FormFieldCallback) => {
               const fieldValue = growthField.state.value;
               const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
               
@@ -241,7 +241,7 @@ export const EsppSection = () => {
             }}
           </form.Field>
                     <form.Field name={`esppPlans[${index}].purchaseCurrency`}>
-            {(currencyField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+            {(currencyField: FormFieldCallback) => {
               const fieldValue = currencyField.state.value;
               const value = typeof fieldValue === "string" ? fieldValue : preferredCurrency || "USD";
               
@@ -276,7 +276,7 @@ export const EsppSection = () => {
             }}
           </form.Field>
                     <form.Field name={`esppPlans[${index}].overrideRate`}>
-            {(overrideField: { name: string; state: { value: unknown }; handleChange: (value: unknown) => void; handleBlur: () => void }) => {
+            {(overrideField: FormFieldCallback) => {
               const fieldValue = overrideField.state.value;
               const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
               
