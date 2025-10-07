@@ -1,18 +1,20 @@
-'use client';
+"use client";
 
 import { useMemo } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useStore } from "@tanstack/react-form";
 
 import { useCompensationSettings } from "./context";
 import { buildCompensationSummary } from "./utils";
+import { useFormContext } from "./form-context";
 import type { CompensationFormValues } from "./schema";
 
 export const useCompensationSummary = () => {
-  const { control } = useFormContext<CompensationFormValues>();
-  const formValues = useWatch({ control });
+  const form = useFormContext();
+  const values = useStore(form.store, (state) => state.values) as CompensationFormValues | null | undefined;
   const { preferredCurrency, defaultRates } = useCompensationSettings();
 
   const summary = useMemo(() => {
+    const formValues = values;
     if (!formValues) {
       return null;
     }
@@ -22,7 +24,7 @@ export const useCompensationSummary = () => {
       preferredCurrency,
       defaultRates,
     );
-  }, [defaultRates, formValues, preferredCurrency]);
+  }, [defaultRates, preferredCurrency, values]);
 
   return summary;
 };

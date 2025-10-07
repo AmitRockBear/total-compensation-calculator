@@ -44,3 +44,6 @@ yarn-error.log*
 
 # idea files
 .idea
+
+tanstack_query_docs
+tanstack_form_docs

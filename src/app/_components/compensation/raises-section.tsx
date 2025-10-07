@@ -1,127 +1,129 @@
 'use client';
 
-import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 
-import type { CompensationFormValues } from "./schema";
+import { useFormContext } from "./form-context";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 
 export const RaisesSection = () => {
-  const { control } = useFormContext<CompensationFormValues>();
-  const { fields, append, remove } = useFieldArray({ control, name: "raises.items" });
-  const enabled = useWatch({ control, name: "raises.enabled" });
+  const form = useFormContext();
+  const enabled = form.state.values.raises?.enabled;
+  const items = form.state.values.raises?.items || [];
 
   return (
-    <Card className="border-dashed">
+    <Card className="border-primary/20 bg-gradient-to-br from-card to-accent/5 shadow-lg">
       <CardHeader>
-        <CardTitle>Expected Salary Raises</CardTitle>
+        <CardTitle className="text-xl font-bold text-primary">Expected Salary Raises</CardTitle>
         <CardDescription>
-          Model projected raises. Apply currency conversions within each field to capture mixed-currency adjustments.
+          Model projected salary increases over time
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Controller
-          control={control}
-          name="raises.enabled"
-          render={({ field }) => (
-            <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 p-4">
+        <form.Field name="raises.enabled">
+          {(field) => (
+            <div className="flex items-center justify-between rounded-xl border-2 border-accent/30 bg-gradient-to-r from-accent/10 to-accent/5 p-5 shadow-sm">
               <div>
-                <p className="text-sm font-semibold">Enable Raises</p>
-                <p className="text-xs text-muted-foreground">
-                  Include planned annual adjustments in your compensation model.
+                <p className="text-base font-semibold text-foreground">Enable Raises</p>
+                <p className="text-sm text-muted-foreground">
+                  Include planned annual adjustments
                 </p>
               </div>
               <Switch
-                checked={field.value}
-                onCheckedChange={(checked) => field.onChange(checked)}
+                checked={field.state.value}
+                onCheckedChange={(checked) => field.handleChange(checked)}
                 aria-label="Enable raises"
               />
             </div>
           )}
-        />
+        </form.Field>
         {enabled ? (
           <div className="flex flex-col gap-4">
-            {fields.map((item, index) => (
-              <Card key={item.id} className="border border-border/60">
-                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base">Raise Year {index + 1}</CardTitle>
-                    <CardDescription>Specify when and how much this raise impacts compensation.</CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => remove(index)} aria-label={`Remove raise ${index + 1}`}>
+            {items.map((_: any, index: number) => (
+              <Card key={index} className="border-accent/30 bg-gradient-to-br from-background to-accent/5 shadow-sm">
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3">
+                  <CardTitle className="text-lg font-semibold text-accent-foreground">Raise Year {index + 1}</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      form.setFieldValue(
+                        "raises.items",
+                        items.filter((_: any, i: number) => i !== index)
+                      );
+                    }}
+                    aria-label={`Remove raise ${index + 1}`}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
                     Remove
                   </Button>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
-                  <Controller
-                    control={control}
-                    name={`raises.items.${index}.yearOffset`}
-                    render={({ field: yearField }) => (
+                  <form.Field name={`raises.items[${index}].yearOffset`}>
+                    {(yearField) => (
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Years from now
-                        </p>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Years from Now
+                        </label>
                         <Input
-                          {...yearField}
+                          name={yearField.name}
+                          value={yearField.state.value}
+                          onBlur={yearField.handleBlur}
+                          onChange={(e) => yearField.handleChange(Number(e.target.value))}
                           type="number"
                           inputMode="numeric"
                           min="1"
                           step="1"
                           aria-label="Years from now for raise"
+                          placeholder="1"
                         />
-                        <p
-                          className="text-xs text-muted-foreground"
-                          title="Number of years from the current period when this raise takes effect."
-                        >
-                          Years from today when this raise applies.
-                        </p>
                       </div>
                     )}
-                  />
-                  <Controller
-                    control={control}
-                    name={`raises.items.${index}.percentage`}
-                    render={({ field: percentageField }) => (
+                  </form.Field>
+                  <form.Field name={`raises.items[${index}].percentage`}>
+                    {(percentageField) => (
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Raise percentage
-                        </p>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Raise Percentage
+                        </label>
                         <Input
-                          {...percentageField}
+                          name={percentageField.name}
+                          value={percentageField.state.value}
+                          onBlur={percentageField.handleBlur}
+                          onChange={(e) => percentageField.handleChange(Number(e.target.value))}
                           type="number"
                           inputMode="decimal"
                           min="-100"
                           max="200"
                           step="0.1"
                           aria-label="Raise percentage"
+                          placeholder="5.0"
                         />
-                        <p
-                          className="text-xs text-muted-foreground"
-                          title="Percentage increase (or decrease) applied to salary in the specified year."
-                        >
-                          Percentage applied to salary and recurring allowances in that year.
-                        </p>
                       </div>
                     )}
-                  />
+                  </form.Field>
                 </CardContent>
               </Card>
             ))}
             <Button
               type="button"
               variant="outline"
+              size="sm"
               className="self-start"
-              onClick={() =>
-                append({
-                  yearOffset: fields.length + 1,
-                  percentage: 5,
-                })
-              }
+              onClick={() => {
+                form.setFieldValue("raises.items", [
+                  ...items,
+                  {
+                    yearOffset: items.length + 1,
+                    percentage: 5,
+                  },
+                ]);
+              }}
               aria-label="Add salary raise"
             >
-              Add Annual Raise
+              + Add Raise
             </Button>
           </div>
         ) : null}

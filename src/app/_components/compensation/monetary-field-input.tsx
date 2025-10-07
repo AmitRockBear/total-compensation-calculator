@@ -1,11 +1,16 @@
-'use client';
+"use client";
 
-import type { FieldPath } from "react-hook-form";
-import { Controller, useFormContext } from "react-hook-form";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 
+import { useFormContext, type CompensationFieldName } from "./form-context";
 import { currencyOptions } from "./constants";
-import type { CompensationFormValues } from "./schema";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -16,9 +21,9 @@ import {
 } from "~/components/ui/select";
 
 type MonetaryFieldInputProps = {
-  amountName: FieldPath<CompensationFormValues>;
-  currencyName: FieldPath<CompensationFormValues>;
-  overrideName: FieldPath<CompensationFormValues>;
+  amountName: CompensationFieldName;
+  currencyName: CompensationFieldName;
+  overrideName: CompensationFieldName;
   label: string;
   description?: string;
 };
@@ -30,61 +35,70 @@ export const MonetaryFieldInput = ({
   label,
   description,
 }: MonetaryFieldInputProps) => {
-  const { control } = useFormContext<CompensationFormValues>();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const form = useFormContext();
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-base">{label}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
+    <Card className="border-2 border-accent/30 bg-gradient-to-br from-background to-accent/5 shadow-sm">
+      <CardHeader className="space-y-1.5 pb-4">
+        <CardTitle className="text-lg font-semibold text-accent-foreground">{label}</CardTitle>
+        {description ? <CardDescription className="text-sm">{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-3">
-        <Controller
-          control={control}
-          name={amountName}
-          render={({ field }) => {
+        <form.Field name={amountName}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(field: any) => {
             const resolvedValue =
-              typeof field.value === "number"
-                ? field.value
-                : typeof field.value === "string"
-                  ? field.value
+              typeof field.state.value === "number"
+                ? field.state.value
+                : typeof field.state.value === "string"
+                  ? field.state.value
                   : "";
 
             return (
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</p>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Amount
+                </label>
                 <Input
-                  {...field}
+                  name={field.name}
                   value={resolvedValue}
+                  onBlur={field.handleBlur}
                   onChange={(event) => {
                     const rawValue = event.target.value;
                     if (rawValue === "") {
-                      field.onChange(undefined);
+                      field.handleChange(undefined);
                       return;
                     }
 
                     const numeric = Number(rawValue);
-                    field.onChange(Number.isNaN(numeric) ? undefined : numeric);
+                    field.handleChange(Number.isNaN(numeric) ? undefined : numeric);
                   }}
                   type="number"
                   inputMode="decimal"
                   step="0.01"
                   min="0"
+                  placeholder="0.00"
                 />
               </div>
             );
           }}
-        />
-        <Controller
-          control={control}
-          name={currencyName}
-          render={({ field }) => (
+        </form.Field>
+        <form.Field name={currencyName}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(field: any) => (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Currency</p>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Currency
+              </label>
               <Select
-                value={typeof field.value === "string" ? field.value : preferredFallback(field.value)}
+                value={
+                  typeof field.state.value === "string"
+                    ? field.state.value
+                    : preferredFallback(field.state.value)
+                }
                 onValueChange={(value) => {
-                  field.onChange(value);
+                  field.handleChange(value);
                 }}
               >
                 <SelectTrigger>
@@ -100,33 +114,33 @@ export const MonetaryFieldInput = ({
               </Select>
             </div>
           )}
-        />
-        <Controller
-          control={control}
-          name={overrideName}
-          render={({ field }) => {
+        </form.Field>
+        <form.Field name={overrideName}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(field: any) => {
             const resolvedValue =
-              typeof field.value === "number" || typeof field.value === "string"
-                ? field.value
+              typeof field.state.value === "number" || typeof field.state.value === "string"
+                ? field.state.value
                 : "";
 
             return (
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Override rate
-                </p>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Override Rate
+                </label>
                 <Input
-                  {...field}
+                  name={field.name}
                   value={resolvedValue}
+                  onBlur={field.handleBlur}
                   onChange={(event) => {
                     const rawValue = event.target.value;
                     if (rawValue === "") {
-                      field.onChange(undefined);
+                      field.handleChange(undefined);
                       return;
                     }
 
                     const numeric = Number(rawValue);
-                    field.onChange(Number.isNaN(numeric) ? undefined : numeric);
+                    field.handleChange(Number.isNaN(numeric) ? field.state.value : numeric);
                   }}
                   type="number"
                   inputMode="decimal"
@@ -137,10 +151,11 @@ export const MonetaryFieldInput = ({
               </div>
             );
           }}
-        />
+        </form.Field>
       </CardContent>
     </Card>
   );
 };
 
-const preferredFallback = (value: unknown) => (typeof value === "string" ? value : "");
+const preferredFallback = (value: unknown) =>
+  typeof value === "string" ? value : "";

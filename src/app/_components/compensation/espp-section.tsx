@@ -1,9 +1,8 @@
 'use client';
 
-import { Controller, useFormContext, useWatch } from "react-hook-form";
-
+import { useFormContext } from "./form-context";
 import { currencyOptions } from "./constants";
-import type { CompensationFormValues } from "./schema";
+import type { CurrencyCode } from "./constants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
@@ -16,110 +15,153 @@ import {
 import { Switch } from "~/components/ui/switch";
 
 export const EsppSection = () => {
-  const { control } = useFormContext<CompensationFormValues>();
-  const enabled = useWatch({ control, name: "espp.enabled" });
+  const form = useFormContext();
+  const enabled = form.state.values.espp?.enabled;
+  const preferredCurrency = form.state.values.recurring?.base?.currency;
+
+  const handleToggle = (checked: boolean, handleChange: (value: boolean) => void) => {
+    handleChange(checked);
+
+    if (checked) {
+      if (form.state.values.espp?.contributionPercentage === undefined) {
+        form.setFieldValue("espp.contributionPercentage", 5);
+      }
+      if (form.state.values.espp?.growthPercentage === undefined) {
+        form.setFieldValue("espp.growthPercentage", 10);
+      }
+      if (!form.state.values.espp?.purchaseCurrency) {
+        form.setFieldValue(
+          "espp.purchaseCurrency",
+          preferredCurrency ?? form.state.values.benefits?.calculationCurrency ?? "USD",
+        );
+      }
+    } else {
+      form.setFieldValue("espp.contributionPercentage", undefined);
+      form.setFieldValue("espp.growthPercentage", undefined);
+      form.setFieldValue("espp.purchaseCurrency", undefined);
+      form.setFieldValue("espp.overrideRate", undefined);
+    }
+  };
 
   return (
-    <Card className="border-dashed">
+    <Card className="border-primary/20 bg-gradient-to-br from-card to-secondary/5 shadow-lg">
       <CardHeader>
-        <CardTitle>Employee Stock Purchase Plan</CardTitle>
+        <CardTitle className="text-xl font-bold text-primary">Employee Stock Purchase Plan</CardTitle>
         <CardDescription>
-          Model contributions and expected stock growth. Toggle ESPP participation to reveal additional details.
+          Model contributions and expected stock growth
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Controller
-          control={control}
-          name="espp.enabled"
-          render={({ field }) => (
-            <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card/80 p-4">
+        <form.Field name="espp.enabled">
+          {(field) => (
+            <div className="flex items-center justify-between rounded-xl border-2 border-accent/30 bg-gradient-to-r from-accent/10 to-accent/5 p-5 shadow-sm">
               <div>
-                <p className="text-sm font-semibold">Enable ESPP</p>
-                <p className="text-xs text-muted-foreground">
-                  Toggle participation to capture contributions and expected returns.
+                <p className="text-base font-semibold text-foreground">Enable ESPP</p>
+                <p className="text-sm text-muted-foreground">
+                  Toggle to capture contributions and returns
                 </p>
               </div>
               <Switch
-                checked={field.value}
-                onCheckedChange={(checked) => field.onChange(checked)}
+                checked={field.state.value}
+                onCheckedChange={(checked) => handleToggle(checked, field.handleChange)}
                 aria-label="Enable ESPP"
               />
             </div>
           )}
-        />
+        </form.Field>
         {enabled ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <Controller
-              control={control}
-              name="espp.contributionPercentage"
-              render={({ field: contributionField }) => (
-                <Card className="border border-border/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
-                      Contribution Percentage
+            <form.Field name="espp.contributionPercentage">
+              {(contributionField) => (
+                <Card className="border-secondary/30 bg-gradient-to-br from-background to-secondary/5 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold text-secondary-foreground">
+                      Contribution Percentage (%)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2">
                     <Input
-                      {...contributionField}
+                      name={contributionField.name}
+                      value={contributionField.state.value ?? ""}
+                      onBlur={contributionField.handleBlur}
+                      onChange={(event) => {
+                        const rawValue = event.target.value;
+                        if (rawValue === "") {
+                          contributionField.handleChange(undefined);
+                          return;
+                        }
+
+                        const numeric = Number(rawValue);
+                        contributionField.handleChange(Number.isNaN(numeric) ? contributionField.state.value : numeric);
+                      }}
                       type="number"
                       inputMode="decimal"
+                      step="0.1"
                       min="0"
                       max="100"
-                      step="0.1"
-                      aria-label="ESPP contribution percentage"
+                      aria-label="Contribution percentage"
+                      placeholder="e.g., 5"
                     />
-                    <p className="text-xs text-muted-foreground" title="Percentage of salary contributed to ESPP.">
-                      Portion of annual salary allocated to ESPP.
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Percentage of annual base salary contributed to ESPP
                     </p>
                   </CardContent>
                 </Card>
               )}
-            />
-            <Controller
-              control={control}
-              name="espp.growthPercentage"
-              render={({ field: growthField }) => (
-                <Card className="border border-border/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
-                      Expected Stock Growth (% per year)
+            </form.Field>
+            <form.Field name="espp.growthPercentage">
+              {(growthField) => (
+                <Card className="border-secondary/30 bg-gradient-to-br from-background to-secondary/5 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold text-secondary-foreground">
+                      Expected Annual Growth (%)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2">
                     <Input
-                      {...growthField}
+                      name={growthField.name}
+                      value={growthField.state.value ?? ""}
+                      onBlur={growthField.handleBlur}
+                      onChange={(event) => {
+                        const rawValue = event.target.value;
+                        if (rawValue === "") {
+                          growthField.handleChange(undefined);
+                          return;
+                        }
+
+                        const numeric = Number(rawValue);
+                        growthField.handleChange(Number.isNaN(numeric) ? growthField.state.value : numeric);
+                      }}
                       type="number"
                       inputMode="decimal"
-                      min="0"
-                      max="200"
                       step="0.1"
-                      aria-label="Expected stock growth percentage"
+                      min="0"
+                      max="100"
+                      aria-label="Expected annual growth percentage"
+                      placeholder="e.g., 10"
                     />
-                    <p
-                      className="text-xs text-muted-foreground"
-                      title="Anticipated annual stock growth applied to contributions."
-                    >
-                      Forecasted annual growth applied to ESPP contributions.
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Forecasted annual growth rate
                     </p>
                   </CardContent>
                 </Card>
               )}
-            />
-            <Controller
-              control={control}
-              name="espp.purchaseCurrency"
-              render={({ field: currencyField }) => (
-                <Card className="border border-border/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
-                      ESPP Purchase Currency
+            </form.Field>
+            <form.Field name="espp.purchaseCurrency">
+              {(currencyField) => (
+                <Card className="border-secondary/30 bg-gradient-to-br from-background to-secondary/5 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold text-secondary-foreground">
+                      Purchase Currency
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2">
                     <Select
-                      value={currencyField.value ?? ""}
-                      onValueChange={(value) => currencyField.onChange(value)}
+                      value={currencyField.state.value ?? ""}
+                      onValueChange={(value) => {
+                        const selected = value as CurrencyCode;
+                        currencyField.handleChange(() => selected);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select currency" />
@@ -132,50 +174,50 @@ export const EsppSection = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground" title="Currency used when purchasing ESPP shares.">
-                      Currency used when purchasing ESPP shares.
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Currency for ESPP purchases
                     </p>
                   </CardContent>
                 </Card>
               )}
-            />
-            <Controller
-              control={control}
-              name="espp.overrideRate"
-              render={({ field: overrideField }) => (
-                <Card className="border border-border/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
+            </form.Field>
+            <form.Field name="espp.overrideRate">
+              {(overrideField) => (
+                <Card className="border-secondary/30 bg-gradient-to-br from-background to-secondary/5 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold text-secondary-foreground">
                       Exchange Rate Override
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2">
                     <Input
-                      {...overrideField}
-                      value={overrideField.value ?? ""}
+                      name={overrideField.name}
+                      value={overrideField.state.value ?? ""}
+                      onBlur={overrideField.handleBlur}
                       onChange={(event) => {
                         const rawValue = event.target.value;
                         if (rawValue === "") {
-                          overrideField.onChange(undefined);
+                          overrideField.handleChange(undefined);
                           return;
                         }
 
                         const numeric = Number(rawValue);
-                        overrideField.onChange(Number.isNaN(numeric) ? overrideField.value : numeric);
+                        overrideField.handleChange(Number.isNaN(numeric) ? overrideField.state.value : numeric);
                       }}
                       type="number"
                       inputMode="decimal"
                       step="0.0001"
                       min="0"
                       aria-label="ESPP exchange rate override"
+                      placeholder="Use default"
                     />
-                    <p className="text-xs text-muted-foreground" title="Override for converting ESPP contributions.">
-                      Optional override for conversions from purchase currency to your desired output.
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Optional conversion override
                     </p>
                   </CardContent>
                 </Card>
               )}
-            />
+            </form.Field>
           </div>
         ) : null}
       </CardContent>

@@ -26,16 +26,16 @@ export const GlobalSettings = () => {
   } = useCompensationSettings();
 
   return (
-    <Card className="border-dashed">
+    <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 shadow-lg">
       <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-2">
-          <CardTitle>Global Settings</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">Global Settings</CardTitle>
           <CardDescription>
             Configure your output currency, manage baseline exchange rates, and toggle theme preferences.
           </CardDescription>
         </div>
         <div className="flex items-center gap-3">
-          <Label htmlFor="theme-toggle" className="text-sm">
+          <Label htmlFor="theme-toggle" className="text-sm font-medium">
             Dark mode
           </Label>
           <Switch
@@ -53,15 +53,15 @@ export const GlobalSettings = () => {
               setThemeMode(theme === "light" ? "dark" : "light");
             }}
           >
-            {theme === "light" ? "Switch to dark" : "Switch to light"}
+            {theme === "light" ? "🌙 Dark" : "☀️ Light"}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
-              Desired output currency
+          <div className="space-y-3 rounded-xl border-2 border-primary/20 bg-background/80 p-5 shadow-sm backdrop-blur-sm">
+            <Label className="text-xs font-bold uppercase tracking-wider text-primary">
+              Desired Output Currency
             </Label>
             <Select
               value={preferredCurrency}
@@ -81,16 +81,16 @@ export const GlobalSettings = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white/90 p-4 shadow-inner transition dark:border-white/10 dark:bg-white/5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
-              Live insights
+          <div className="space-y-3 rounded-xl border-2 border-secondary/20 bg-background/80 p-5 shadow-sm backdrop-blur-sm">
+            <Label className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
+              Live Insights
             </Label>
-            <p className="text-sm text-slate-600 dark:text-white/70">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Calculations and visualizations update instantly as you edit values. Use the calculate button to validate inputs
               and capture a shareable snapshot.
             </p>
             <p
-              className="text-xs text-slate-500 dark:text-white/60"
+              className="text-xs text-muted-foreground/80"
               aria-label="Exchange rate note"
               title="Exchange rates are relative to USD by default."
             >
@@ -99,16 +99,16 @@ export const GlobalSettings = () => {
           </div>
         </div>
         <div>
-          <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-white/60">
-            Default exchange rates
+          <Label className="text-xs font-bold uppercase tracking-wider text-primary">
+            Default Exchange Rates
           </Label>
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {currencyOptions.map((currency) => (
               <div
                 key={currency}
-                className="flex flex-col gap-2 rounded-xl border border-slate-200/70 bg-white/90 px-4 py-3 shadow-inner transition dark:border-white/10 dark:bg-white/5"
+                className="flex flex-col gap-2 rounded-xl border-2 border-accent/20 bg-background/80 px-4 py-3 shadow-sm backdrop-blur-sm transition-all hover:border-accent/40 hover:shadow-md"
               >
-                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-500 dark:text-white/60">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-accent-foreground">
                   <span>{currency}</span>
                   <span title="Default exchange rate relative to USD" aria-label="Default exchange rate relative to USD">
                     ↔ USD

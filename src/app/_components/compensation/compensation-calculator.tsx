@@ -1,80 +1,87 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm, useFormContext } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "@tanstack/react-form";
 
 import { BenefitsSection } from "./benefits-section";
 import { EsppSection } from "./espp-section";
-import { GlobalSettings } from "./global-settings";
 import { RaisesSection } from "./raises-section";
 import { RecurringCompensationSection } from "./recurring-compensation-section";
 import { RsuSection } from "./rsu-section";
 import { SummaryPanel } from "./summary-panel";
 import { getDefaultFormValues } from "./defaults";
-import { compensationFormSchema, type CompensationFormValues } from "./schema";
+import { compensationFormSchema } from "./schema";
 import { useCompensationSummary } from "./use-compensation-summary";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { FormContext, useFormContext } from "./form-context";
 
 type SubmissionStatus = "idle" | "success" | "error";
 
 type CalculatorContentProps = {
-  readonly onCalculate: () => void;
   readonly status: SubmissionStatus;
-  readonly onResetStatus: () => void;
+  readonly errorCount: number;
 };
 
 const CalculatorContent = ({
-  onCalculate,
   status,
-  onResetStatus,
+  errorCount,
 }: CalculatorContentProps) => {
   const summary = useCompensationSummary();
-  const {
-    formState: { isSubmitting, isDirty, errors },
-  } = useFormContext<CompensationFormValues>();
-
-  useEffect(() => {
-    if (status !== "idle" && isDirty) {
-      onResetStatus();
-    }
-  }, [isDirty, onResetStatus, status]);
-
-  const errorCount = Object.keys(errors).length;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const form = useFormContext();
+  const canShowSummary = status === "success" && errorCount === 0 && summary !== null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+    <div className="flex flex-col gap-8">
+      {canShowSummary && summary ? (
+        <SummaryPanel summary={summary} status={status} errorCount={errorCount} />
+      ) : null}
       <form
         className="flex flex-col gap-6"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          onCalculate();
+          event.stopPropagation();
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          void form.handleSubmit();
         }}
       >
-        <GlobalSettings />
-        <RecurringCompensationSection />
-        <BenefitsSection />
-        <RsuSection />
-        <EsppSection />
-        <RaisesSection />
-        <Card className="border border-border/60 bg-card/80">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <p className="text-sm text-muted-foreground">
-              {status === "success" && errorCount === 0
-                ? "Snapshot updated. Charts reflect the latest calculation."
-                : status === "error"
-                  ? "Review highlighted fields to complete calculation."
-                  : "Press calculate to validate inputs and capture a snapshot."}
-            </p>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Calculating..." : "Calculate Total Compensation"}
+        <div className="grid gap-6 xl:grid-cols-2">
+          <div className="space-y-6">
+            <RecurringCompensationSection />
+            <BenefitsSection />
+          </div>
+          <div className="space-y-6">
+            <RsuSection />
+            <EsppSection />
+            <RaisesSection />
+          </div>
+        </div>
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 shadow-lg shadow-primary/10">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+            <div className="space-y-1.5">
+              <p className="text-base font-semibold text-foreground">
+                {status === "success" && errorCount === 0
+                  ? "✓ Calculation Complete"
+                  : status === "error"
+                    ? "⚠ Please Review Fields"
+                    : "Ready to Calculate"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {status === "success" && errorCount === 0
+                  ? "Your compensation summary has been updated"
+                  : status === "error"
+                    ? "Some fields need your attention"
+                    : "Press calculate to see your total compensation"}
+              </p>
+            </div>
+            <Button type="submit" disabled={false} size="lg">
+              Calculate Total
             </Button>
           </CardContent>
         </Card>
       </form>
-      <SummaryPanel summary={summary} status={status} errorCount={errorCount} />
     </div>
   );
 };
@@ -82,44 +89,41 @@ const CalculatorContent = ({
 export const CompensationCalculator = () => {
   const [status, setStatus] = useState<SubmissionStatus>("idle");
 
-  const methods = useForm<CompensationFormValues>({
-    resolver: zodResolver(compensationFormSchema),
-    defaultValues: useMemo(() => getDefaultFormValues(), []),
-    mode: "onChange",
+  const form = useForm({
+    defaultValues: getDefaultFormValues(),
+    onSubmit: async ({ value }) => {
+      try {
+        // Validate the form
+        const result = compensationFormSchema.safeParse(value);
+        if (result.success) {
+          setStatus("success");
+        } else {
+          setStatus("error");
+        }
+      } catch {
+        setStatus("error");
+      }
+    },
   });
-
-  const { handleSubmit } = methods;
-
-  const handleSuccess = useCallback(() => {
-    setStatus("success");
-  }, []);
-
-  const handleError = useCallback(() => {
-    setStatus("error");
-  }, []);
 
   const handleResetStatus = useCallback(() => {
     setStatus("idle");
   }, []);
 
-  const onCalculate = useCallback(() => {
-    void handleSubmit(
-      () => {
-        handleSuccess();
-      },
-      () => {
-        handleError();
-      },
-    )();
-  }, [handleError, handleSubmit, handleSuccess]);
+  useEffect(() => {
+    if (status !== "idle" && form.state.isDirty) {
+      handleResetStatus();
+    }
+  }, [form.state.isDirty, handleResetStatus, status]);
+
+  const errorCount = form.state.errors.length;
 
   return (
-    <FormProvider {...methods}>
+    <FormContext.Provider value={form}>
       <CalculatorContent
-        onCalculate={onCalculate}
         status={status}
-        onResetStatus={handleResetStatus}
+        errorCount={errorCount}
       />
-    </FormProvider>
+    </FormContext.Provider>
   );
 };

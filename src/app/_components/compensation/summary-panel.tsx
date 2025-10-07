@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMemo } from "react";
 
@@ -6,13 +6,23 @@ import { distributionColors } from "./constants";
 import type { SubmissionStatus } from "./types";
 import type { CompensationSummary } from "./utils";
 import { formatCurrency } from "./formatters";
-import { CompensationDistributionChart, GrowthOverTimeChart } from "./summary";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  CompensationDistributionChart,
+  GrowthOverTimeChart,
+  TotalCompensationChart,
+} from "./summary";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
 const SummaryRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-    <span>{label}</span>
-    <span className="font-semibold text-foreground">{value}</span>
+  <div className="border-primary/20 from-primary/5 to-primary/10 flex items-center justify-between rounded-xl border-2 bg-gradient-to-r px-5 py-3.5 text-sm shadow-sm">
+    <span className="text-muted-foreground font-medium">{label}</span>
+    <span className="text-primary font-bold">{value}</span>
   </div>
 );
 
@@ -22,7 +32,11 @@ type SummaryPanelProps = {
   readonly errorCount: number;
 };
 
-export const SummaryPanel = ({ summary, status, errorCount }: SummaryPanelProps) => {
+export const SummaryPanel = ({
+  summary,
+  status,
+  errorCount,
+}: SummaryPanelProps) => {
   const totals = summary?.totals;
 
   const distributionData = useMemo(() => {
@@ -33,7 +47,8 @@ export const SummaryPanel = ({ summary, status, errorCount }: SummaryPanelProps)
     return summary.distribution
       .filter((item) => item.value > 0)
       .map((item, index) => {
-        const fillColor = distributionColors[index % distributionColors.length] ?? "#2563eb";
+        const fillColor =
+          distributionColors[index % distributionColors.length] ?? "#2563eb";
 
         return {
           name: item.label,
@@ -47,105 +62,107 @@ export const SummaryPanel = ({ summary, status, errorCount }: SummaryPanelProps)
 
   return (
     <aside className="flex flex-col gap-6">
-      <Card className="border-dashed">
+      <Card className="border-primary/30 from-card to-primary/5 bg-gradient-to-br shadow-xl">
         <CardHeader>
-          <CardTitle>Compensation Snapshot</CardTitle>
-          <CardDescription>
-            Results convert every input to your desired currency. Charts refresh instantly for deeper insight.
+          <CardTitle className="text-primary text-2xl font-bold">
+            Compensation Snapshot
+          </CardTitle>
+          <CardDescription className="text-base">
+            Real-time visualization of your total compensation package.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <SummaryRow
-              label="Total Annual Compensation"
-              value={totals ? formatCurrency(totals.annual, summary.preferredCurrency) : "--"}
+              label="Annual Total"
+              value={
+                totals
+                  ? formatCurrency(totals.annual, summary.preferredCurrency)
+                  : "--"
+              }
             />
             <SummaryRow
-              label="Monthly Equivalent"
-              value={totals ? formatCurrency(totals.monthly, summary.preferredCurrency) : "--"}
-            />
-            <SummaryRow
-              label="RSU Value per Year"
-              value={totals ? formatCurrency(totals.rsuAnnual, summary.preferredCurrency) : "--"}
-            />
-            <SummaryRow
-              label="ESPP Contributions"
-              value={summary?.totals.espp.enabled
-                ? formatCurrency(summary.totals.espp.contributions, summary.preferredCurrency)
-                : "--"}
-            />
-            <SummaryRow
-              label="ESPP Expected Returns"
-              value={summary?.totals.espp.enabled
-                ? formatCurrency(summary.totals.espp.returns, summary.preferredCurrency)
-                : "--"}
+              label="Monthly"
+              value={
+                totals
+                  ? formatCurrency(totals.monthly, summary.preferredCurrency)
+                  : "--"
+              }
             />
           </div>
-          <div className="grid gap-4">
-            <Card className="border border-border/60 bg-card">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="border-secondary/30 from-background to-secondary/5 border-2 bg-gradient-to-br shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
-                  Distribution
+                <CardTitle className="text-secondary-foreground text-base font-bold tracking-wider uppercase">
+                  Breakdown
                 </CardTitle>
-                <CardDescription>Relative contribution of each compensation component.</CardDescription>
+                <CardDescription>
+                  Annual compensation by component
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <CompensationDistributionChart data={distributionData} currency={summary?.preferredCurrency} />
+                <TotalCompensationChart
+                  baseAmount={(totals?.base ?? 0) + (totals?.allowances ?? 0)}
+                  bonusAmount={totals?.bonus ?? 0}
+                  benefitsAmount={totals?.benefits ?? 0}
+                  rsuAmount={totals?.rsuAnnual ?? 0}
+                  esppAmount={
+                    summary?.totals.espp.enabled
+                      ? summary.totals.espp.returns
+                      : 0
+                  }
+                  currency={summary?.preferredCurrency}
+                />
               </CardContent>
             </Card>
-            <Card className="border border-border/60 bg-card">
+            <Card className="border-accent/30 from-background to-accent/5 border-2 bg-gradient-to-br shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
-                  Projected Growth
+                <CardTitle className="text-accent-foreground text-base font-bold tracking-wider uppercase">
+                  4-Year Growth
                 </CardTitle>
-                <CardDescription>Incorporates raises, vesting schedules, and ESPP contributions.</CardDescription>
+                <CardDescription>
+                  Projected compensation over time
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <GrowthOverTimeChart data={timelineData} currency={summary?.preferredCurrency} />
-              </CardContent>
-            </Card>
-            <Card className="border border-border/60 bg-card">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Highlights</CardTitle>
-                <CardDescription>Key figures derived from the calculated totals.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>
-                    <span className="font-semibold text-foreground">Base + Allowances:</span>{" "}
-                    {totals ? formatCurrency(totals.base + totals.allowances, summary.preferredCurrency) : "--"}
-                  </li>
-                  <li>
-                    <span className="font-semibold text-foreground">Bonus:</span>{" "}
-                    {totals ? formatCurrency(totals.bonus, summary.preferredCurrency) : "--"}
-                  </li>
-                  <li>
-                    <span className="font-semibold text-foreground">Benefits:</span>{" "}
-                    {totals ? formatCurrency(totals.benefits, summary.preferredCurrency) : "--"}
-                  </li>
-                  <li>
-                    <span className="font-semibold text-foreground">Raises Enabled:</span>{" "}
-                    {summary?.timeline.some((point) => point.year > 0 && point.total !== summary.timeline[0]?.total)
-                      ? "Yes"
-                      : "No"}
-                  </li>
-                </ul>
+                <GrowthOverTimeChart
+                  data={timelineData}
+                  currency={summary?.preferredCurrency}
+                />
               </CardContent>
             </Card>
           </div>
+          <Card className="border-primary/30 from-background to-primary/5 border-2 bg-gradient-to-br shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-primary text-base font-bold tracking-wider uppercase">
+                Distribution
+              </CardTitle>
+              <CardDescription>
+                Relative contribution of each component
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <CompensationDistributionChart
+                data={distributionData}
+                currency={summary?.preferredCurrency}
+              />
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
       {status === "error" && errorCount > 0 ? (
-        <Card className="border border-red-500/40 bg-red-500/10">
-          <CardContent className="p-4 text-sm text-red-600 dark:text-red-200">
-            Some fields need attention. Resolve validation errors, then recalculate to refresh the summary.
+        <Card className="border-destructive/40 from-destructive/10 to-destructive/5 border-2 bg-gradient-to-br shadow-lg">
+          <CardContent className="text-destructive p-5 text-sm font-medium">
+            ⚠ Some fields need attention. Resolve validation errors, then
+            recalculate to refresh the summary.
           </CardContent>
         </Card>
       ) : null}
       {status === "success" ? (
-        <Card className="border border-emerald-500/40 bg-emerald-500/10">
-          <CardContent className="p-4 text-sm text-emerald-600 dark:text-emerald-100">
-            Snapshot saved. Share your insights confidently knowing all numbers reflect the latest inputs.
+        <Card className="border-primary/40 from-primary/10 to-primary/5 border-2 bg-gradient-to-br shadow-lg">
+          <CardContent className="text-primary p-5 text-sm font-medium">
+            ✓ Snapshot saved. Share your insights confidently knowing all
+            numbers reflect the latest inputs.
           </CardContent>
         </Card>
       ) : null}

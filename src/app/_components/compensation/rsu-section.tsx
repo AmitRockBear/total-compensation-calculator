@@ -1,134 +1,143 @@
 'use client';
 
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 
 import { useCompensationSettings } from "./context";
+import { useFormContext } from "./form-context";
 import { MonetaryFieldInput } from "./monetary-field-input";
-import type { CompensationFormValues } from "./schema";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 
 export const RsuSection = () => {
   const { preferredCurrency } = useCompensationSettings();
-  const { control } = useFormContext<CompensationFormValues>();
-  const { fields, append, remove } = useFieldArray({ control, name: "rsuGrants" });
+  const form = useFormContext();
+  const grants = form.state.values.rsuGrants || [];
 
   return (
-    <Card className="border-dashed">
+    <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 shadow-lg">
       <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-2">
-          <CardTitle>RSU Grants</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">RSU Grants</CardTitle>
           <CardDescription>
-            Track grant values, vesting schedules, and currency conversions. Values are evenly distributed across vesting
-            years.
+            Track grant values and vesting schedules with automatic currency conversion
           </CardDescription>
         </div>
         <Button
           variant="outline"
+          size="sm"
           onClick={() => {
-            append({
-              name: "New Grant",
-              startDate: new Date().toISOString().slice(0, 10),
-              vestingYears: 4,
-              totalValue: {
-                amount: 0,
-                currency: preferredCurrency,
+            form.setFieldValue("rsuGrants", [
+              ...grants,
+              {
+                name: "New Grant",
+                startDate: new Date().toISOString().slice(0, 10),
+                vestingYears: 4,
+                totalValue: {
+                  amount: 0,
+                  currency: preferredCurrency,
+                },
               },
-            });
+            ]);
           }}
           aria-label="Add RSU Grant"
         >
-          Add RSU Grant
+          + Add Grant
         </Button>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {fields.map((field, index) => (
-          <Card key={field.id} className="border border-border/60">
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base">
-                  {field.name || `Grant ${index + 1}`}
-                </CardTitle>
-                <CardDescription>Configure vesting and valuation for this grant.</CardDescription>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (fields.length > 1) {
-                    remove(index);
-                  }
-                }}
-                aria-label={`Remove grant ${index + 1}`}
-              >
-                Remove
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Controller
-                  control={control}
-                  name={`rsuGrants.${index}.name`}
-                  render={({ field: fieldController }) => (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Grant name</p>
-                      <Input {...fieldController} type="text" aria-label="Grant name" />
-                      <p className="text-xs text-muted-foreground" title="Label for identifying this grant.">
-                        Add a descriptive name to identify this grant.
-                      </p>
-                    </div>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name={`rsuGrants.${index}.vestingYears`}
-                  render={({ field: fieldController }) => (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Vesting duration (years)
-                      </p>
-                      <Input
-                        {...fieldController}
-                        type="number"
-                        inputMode="numeric"
-                        min="1"
-                        step="1"
-                        aria-label="Vesting duration in years"
-                      />
-                      <p className="text-xs text-muted-foreground" title="Number of years over which the grant vests.">
-                        Number of years over which the total value is distributed.
-                      </p>
-                    </div>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name={`rsuGrants.${index}.startDate`}
-                  render={({ field: fieldController }) => (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start date</p>
-                      <Input {...fieldController} type="date" aria-label="Grant start date" />
-                      <p className="text-xs text-muted-foreground" title="Date when vesting starts.">
-                        Vesting begins on this date.
-                      </p>
-                    </div>
-                  )}
-                />
-              </div>
-              <MonetaryFieldInput
-                amountName={`rsuGrants.${index}.totalValue.amount`}
-                currencyName={`rsuGrants.${index}.totalValue.currency`}
-                overrideName={`rsuGrants.${index}.totalValue.overrideRate`}
-                label="Total grant value"
-                description="Total value of the grant in the selected currency. Optional override applies when converting from grant currency."
-              />
-            </CardContent>
-          </Card>
-        ))}
-        <p className="text-xs text-muted-foreground" title="Exchange rate note">
-          Enter override rates to handle grants issued in different currencies relative to the output currency.
-        </p>
+      <CardContent className="space-y-4">
+        <form.Field name="rsuGrants" mode="array">
+          {(_field) => {
+            return grants.map((_: any, index: number) => (
+              <Card key={index} className="border-accent/30 bg-gradient-to-br from-background to-accent/5 shadow-sm">
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3">
+                  <CardTitle className="text-lg font-semibold text-accent-foreground">
+                    {grants[index]?.name ?? `Grant ${index + 1}`}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (grants.length > 1) {
+                        form.setFieldValue(
+                          "rsuGrants",
+                          grants.filter((_: any, i: number) => i !== index)
+                        );
+                      }
+                    }}
+                    aria-label={`Remove grant ${index + 1}`}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    Remove
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <form.Field name={`rsuGrants[${index}].name`}>
+                      {(subField) => (
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Grant Name</label>
+                          <Input
+                            name={subField.name}
+                            value={subField.state.value}
+                            onBlur={subField.handleBlur}
+                            onChange={(e) => subField.handleChange(e.target.value)}
+                            type="text"
+                            aria-label="Grant name"
+                            placeholder="e.g., Initial Grant"
+                          />
+                        </div>
+                      )}
+                    </form.Field>
+                    <form.Field name={`rsuGrants[${index}].vestingYears`}>
+                      {(subField) => (
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Vesting Years
+                          </label>
+                          <Input
+                            name={subField.name}
+                            value={subField.state.value}
+                            onBlur={subField.handleBlur}
+                            onChange={(e) => subField.handleChange(Number(e.target.value))}
+                            type="number"
+                            inputMode="numeric"
+                            min="1"
+                            step="1"
+                            aria-label="Vesting duration in years"
+                            placeholder="4"
+                          />
+                        </div>
+                      )}
+                    </form.Field>
+                    <form.Field name={`rsuGrants[${index}].startDate`}>
+                      {(subField) => (
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Start Date</label>
+                          <Input
+                            name={subField.name}
+                            value={subField.state.value}
+                            onBlur={subField.handleBlur}
+                            onChange={(e) => subField.handleChange(e.target.value)}
+                            type="date"
+                            aria-label="Grant start date"
+                          />
+                        </div>
+                      )}
+                    </form.Field>
+                  </div>
+                  <MonetaryFieldInput
+                    amountName={`rsuGrants[${index}].totalValue.amount`}
+                    currencyName={`rsuGrants[${index}].totalValue.currency`}
+                    overrideName={`rsuGrants[${index}].totalValue.overrideRate`}
+                    label="Total Grant Value"
+                    description="Total value distributed across vesting years"
+                  />
+                </CardContent>
+              </Card>
+            ));
+          }}
+        </form.Field>
       </CardContent>
     </Card>
   );

@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 
-import { CurrencyCode, defaultExchangeRates } from "./constants";
+import { defaultExchangeRates } from "./constants";
+import type { CurrencyCode } from "./constants";
 
 type ExchangeRates = Record<CurrencyCode, number>;
 
-type CompensationSettingsContextValue = {
+type CompensationSettingsState = {
+  preferredCurrency: CurrencyCode;
+  defaultRates: ExchangeRates;
+};
+
+export type CompensationSettingsContextValue = {
   preferredCurrency: CurrencyCode;
   setPreferredCurrency: (currency: CurrencyCode) => void;
   defaultRates: ExchangeRates;
@@ -17,57 +24,92 @@ type CompensationSettingsContextValue = {
   setThemeMode: (mode: "light" | "dark") => void;
 };
 
-const CompensationSettingsContext =
-  createContext<CompensationSettingsContextValue | null>(null);
+const settingsQueryKey = ["compensation-settings"] as const;
 
-export const CompensationSettingsProvider = ({
-  children,
-}: {
-  readonly children: React.ReactNode;
-}) => {
-  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(
-    "USD",
-  );
-  const [defaultRates, setDefaultRates] = useState<ExchangeRates>(
-    defaultExchangeRates,
-  );
+const createInitialSettings = (): CompensationSettingsState => ({
+  preferredCurrency: "USD",
+  defaultRates: { ...defaultExchangeRates },
+});
+
+export const useCompensationSettings = (): CompensationSettingsContextValue => {
+  const queryClient = useQueryClient();
   const { resolvedTheme, setTheme } = useTheme();
+
+  const { data } = useQuery({
+    queryKey: settingsQueryKey,
+    queryFn: () => createInitialSettings(),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    initialData: createInitialSettings,
+  });
+
+  const settings = data ?? createInitialSettings();
+
+  const setPreferredCurrency = useCallback(
+    (currency: CurrencyCode) => {
+      queryClient.setQueryData(
+        settingsQueryKey,
+        (previous?: CompensationSettingsState) => {
+          const base = previous ?? createInitialSettings();
+
+          if (base.preferredCurrency === currency) {
+            return base;
+          }
+
+          return {
+            ...base,
+            preferredCurrency: currency,
+          };
+        },
+      );
+    },
+    [queryClient],
+  );
+
+  const updateRate = useCallback(
+    (currency: CurrencyCode, value: number) => {
+      if (value <= 0) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        settingsQueryKey,
+        (previous?: CompensationSettingsState) => {
+          const base = previous ?? createInitialSettings();
+
+          return {
+            ...base,
+            defaultRates: {
+              ...base.defaultRates,
+              [currency]: value,
+            },
+          };
+        },
+      );
+    },
+    [queryClient],
+  );
+
   const theme = resolvedTheme === "dark" ? "dark" : "light";
 
-  const value = useMemo<CompensationSettingsContextValue>(() => ({
-    preferredCurrency,
-    setPreferredCurrency,
-    defaultRates,
-    updateRate: (currency, value) => {
-      setDefaultRates((previous) => ({
-        ...previous,
-        [currency]: value > 0 ? value : previous[currency],
-      }));
-    },
-    theme,
-    toggleTheme: () => {
-      setTheme(theme === "light" ? "dark" : "light");
-    },
-    setThemeMode: (mode) => {
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "light" ? "dark" : "light");
+  }, [setTheme, theme]);
+
+  const setThemeMode = useCallback(
+    (mode: "light" | "dark") => {
       setTheme(mode);
     },
-  }), [defaultRates, preferredCurrency, setTheme, theme]);
-
-  return (
-    <CompensationSettingsContext.Provider value={value}>
-      {children}
-    </CompensationSettingsContext.Provider>
+    [setTheme],
   );
-};
 
-export const useCompensationSettings = () => {
-  const context = useContext(CompensationSettingsContext);
-
-  if (!context) {
-    throw new Error(
-      "useCompensationSettings must be used within CompensationSettingsProvider",
-    );
-  }
-
-  return context;
+  return {
+    preferredCurrency: settings.preferredCurrency,
+    setPreferredCurrency,
+    defaultRates: settings.defaultRates,
+    updateRate,
+    theme,
+    toggleTheme,
+    setThemeMode,
+  };
 };
