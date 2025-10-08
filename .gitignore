@@ -38,5 +38,3 @@ yarn-error.log*
 
 tanstack_query_docs
 tanstack_form_docs
-
-*.js.map

@@ -1,14 +1,7 @@
 import { createContext, useContext } from "react";
 
-// TanStack Form's ReactFormExtendedApi type requires 12 complex generic parameters
-// that are difficult to specify correctly. Using `any` here is pragmatic because:
-// 1. The form is created with proper types in compensation-calculator.tsx
-// 2. TypeScript will still infer types at usage sites (form.Field, form.state, etc.)
-// 3. This avoids type compatibility issues between TanStack Form versions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CompensationFormApi = any;
 
-// Type for form field callbacks to avoid repeating the type annotation
 export type FormFieldCallback = {
   name: string;
   state: { value: unknown };
@@ -21,7 +14,9 @@ export const FormContext = createContext<CompensationFormApi | null>(null);
 export const useFormContext = (): CompensationFormApi => {
   const context = useContext(FormContext);
   if (!context) {
-    throw new Error("useFormContext must be used within a FormContext.Provider");
+    throw new Error(
+      "useFormContext must be used within a FormContext.Provider",
+    );
   }
   return context;
 };

@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
 import { useCompensationSettings } from "~/features/compensation/components/context";
-import { useFormContext, type FormFieldCallback } from "~/features/compensation/components/forms/form-context";
+import {
+  useFormContext,
+  type FormFieldCallback,
+} from "~/features/compensation/components/forms/form-context";
 import type { EsppPlanValues } from "~/features/compensation/types/schema";
-import { currencyOptions, type CurrencyCode } from "~/features/compensation/lib/constants";
+import {
+  currencyOptions,
+  type CurrencyCode,
+} from "~/features/compensation/lib/constants";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -93,7 +99,10 @@ export const EsppSection = () => {
                   <div className="grid gap-4 md:grid-cols-3">
                     <form.Field name={`esppPlans[${index}].name`}>
                       {(subField: FormFieldCallback) => {
-                        const value = typeof subField.state.value === "string" ? subField.state.value : "";
+                        const value =
+                          typeof subField.state.value === "string"
+                            ? subField.state.value
+                            : "";
                         return (
                           <div className="space-y-2">
                             <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
@@ -103,7 +112,9 @@ export const EsppSection = () => {
                               name={subField.name}
                               value={value}
                               onBlur={subField.handleBlur}
-                              onChange={(e) => subField.handleChange(e.target.value)}
+                              onChange={(e) =>
+                                subField.handleChange(e.target.value)
+                              }
                               type="text"
                               aria-label="Plan name"
                               placeholder="e.g., H1 2025"
@@ -114,7 +125,10 @@ export const EsppSection = () => {
                     </form.Field>
                     <form.Field name={`esppPlans[${index}].startDate`}>
                       {(subField: FormFieldCallback) => {
-                        const value = typeof subField.state.value === "string" ? subField.state.value : "";
+                        const value =
+                          typeof subField.state.value === "string"
+                            ? subField.state.value
+                            : "";
                         return (
                           <div className="space-y-2">
                             <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
@@ -124,7 +138,9 @@ export const EsppSection = () => {
                               name={subField.name}
                               value={value}
                               onBlur={subField.handleBlur}
-                              onChange={(e) => subField.handleChange(e.target.value)}
+                              onChange={(e) =>
+                                subField.handleChange(e.target.value)
+                              }
                               type="date"
                               aria-label="Plan start date"
                             />
@@ -134,7 +150,11 @@ export const EsppSection = () => {
                     </form.Field>
                     <form.Field name={`esppPlans[${index}].durationMonths`}>
                       {(subField: FormFieldCallback) => {
-                        const value = typeof subField.state.value === "number" || typeof subField.state.value === "string" ? subField.state.value : "";
+                        const value =
+                          typeof subField.state.value === "number" ||
+                          typeof subField.state.value === "string"
+                            ? subField.state.value
+                            : "";
                         return (
                           <div className="space-y-2">
                             <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
@@ -144,7 +164,9 @@ export const EsppSection = () => {
                               name={subField.name}
                               value={value}
                               onBlur={subField.handleBlur}
-                              onChange={(e) => subField.handleChange(Number(e.target.value))}
+                              onChange={(e) =>
+                                subField.handleChange(Number(e.target.value))
+                              }
                               type="number"
                               inputMode="numeric"
                               min="1"
@@ -158,161 +180,185 @@ export const EsppSection = () => {
                     </form.Field>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <form.Field name={`esppPlans[${index}].contributionPercentage`}>
-            {(contributionField: FormFieldCallback) => {
-              const fieldValue = contributionField.state.value;
-              const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
-              
-              return (
-                <div className="space-y-2">
-                  <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                    Contribution Percentage (%)
-                  </label>
-                  <Input
-                    name={contributionField.name}
-                    value={value}
-                    onBlur={contributionField.handleBlur}
-                    onChange={(event) => {
-                      const rawValue = event.target.value;
-                      if (rawValue === "") {
-                        contributionField.handleChange(undefined);
-                        return;
-                      }
+                    <form.Field
+                      name={`esppPlans[${index}].contributionPercentage`}
+                    >
+                      {(contributionField: FormFieldCallback) => {
+                        const fieldValue = contributionField.state.value;
+                        const value =
+                          typeof fieldValue === "number" ||
+                          typeof fieldValue === "string"
+                            ? fieldValue
+                            : "";
 
-                      const numeric = Number(rawValue);
-                      contributionField.handleChange(
-                        Number.isNaN(numeric) ? contributionField.state.value : numeric
-                      );
-                    }}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    aria-label="Contribution percentage"
-                    placeholder="e.g., 5"
-                  />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Percentage of annual base salary contributed to ESPP
-                  </p>
-                </div>
-              );
-            }}
-          </form.Field>
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Contribution Percentage (%)
+                            </label>
+                            <Input
+                              name={contributionField.name}
+                              value={value}
+                              onBlur={contributionField.handleBlur}
+                              onChange={(event) => {
+                                const rawValue = event.target.value;
+                                if (rawValue === "") {
+                                  contributionField.handleChange(undefined);
+                                  return;
+                                }
+
+                                const numeric = Number(rawValue);
+                                contributionField.handleChange(
+                                  Number.isNaN(numeric)
+                                    ? contributionField.state.value
+                                    : numeric,
+                                );
+                              }}
+                              type="number"
+                              inputMode="decimal"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              aria-label="Contribution percentage"
+                              placeholder="e.g., 5"
+                            />
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                              Percentage of annual base salary contributed to
+                              ESPP
+                            </p>
+                          </div>
+                        );
+                      }}
+                    </form.Field>
                     <form.Field name={`esppPlans[${index}].growthPercentage`}>
-            {(growthField: FormFieldCallback) => {
-              const fieldValue = growthField.state.value;
-              const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
-              
-              return (
-                <div className="space-y-2">
-                  <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                    Expected Annual Growth (%)
-                  </label>
-                  <Input
-                    name={growthField.name}
-                    value={value}
-                    onBlur={growthField.handleBlur}
-                    onChange={(event) => {
-                      const rawValue = event.target.value;
-                      if (rawValue === "") {
-                        growthField.handleChange(undefined);
-                        return;
-                      }
+                      {(growthField: FormFieldCallback) => {
+                        const fieldValue = growthField.state.value;
+                        const value =
+                          typeof fieldValue === "number" ||
+                          typeof fieldValue === "string"
+                            ? fieldValue
+                            : "";
 
-                      const numeric = Number(rawValue);
-                      growthField.handleChange(
-                        Number.isNaN(numeric) ? growthField.state.value : numeric
-                      );
-                    }}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    aria-label="Expected annual growth percentage"
-                    placeholder="e.g., 10"
-                  />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Forecasted annual growth rate
-                  </p>
-                </div>
-              );
-            }}
-          </form.Field>
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Expected Annual Growth (%)
+                            </label>
+                            <Input
+                              name={growthField.name}
+                              value={value}
+                              onBlur={growthField.handleBlur}
+                              onChange={(event) => {
+                                const rawValue = event.target.value;
+                                if (rawValue === "") {
+                                  growthField.handleChange(undefined);
+                                  return;
+                                }
+
+                                const numeric = Number(rawValue);
+                                growthField.handleChange(
+                                  Number.isNaN(numeric)
+                                    ? growthField.state.value
+                                    : numeric,
+                                );
+                              }}
+                              type="number"
+                              inputMode="decimal"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              aria-label="Expected annual growth percentage"
+                              placeholder="e.g., 10"
+                            />
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                              Forecasted annual growth rate
+                            </p>
+                          </div>
+                        );
+                      }}
+                    </form.Field>
                     <form.Field name={`esppPlans[${index}].purchaseCurrency`}>
-            {(currencyField: FormFieldCallback) => {
-              const fieldValue = currencyField.state.value;
-              const value = typeof fieldValue === "string" ? fieldValue : preferredCurrency || "USD";
-              
-              return (
-                <div className="space-y-2">
-                  <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                    Purchase Currency
-                  </label>
-                  <Select
-                    value={value}
-                    onValueChange={(value) => {
-                      const selected = value as CurrencyCode;
-                      currencyField.handleChange(selected);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencyOptions.map((currency) => (
-                        <SelectItem key={currency} value={currency}>
-                          {currency}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Currency for ESPP purchases
-                  </p>
-                </div>
-              );
-            }}
-          </form.Field>
-                    <form.Field name={`esppPlans[${index}].overrideRate`}>
-            {(overrideField: FormFieldCallback) => {
-              const fieldValue = overrideField.state.value;
-              const value = typeof fieldValue === "number" || typeof fieldValue === "string" ? fieldValue : "";
-              
-              return (
-                <div className="space-y-2">
-                  <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                    Exchange Rate Override
-                  </label>
-                  <Input
-                    name={overrideField.name}
-                    value={value}
-                    onBlur={overrideField.handleBlur}
-                    onChange={(event) => {
-                      const rawValue = event.target.value;
-                      if (rawValue === "") {
-                        overrideField.handleChange(undefined);
-                        return;
-                      }
+                      {(currencyField: FormFieldCallback) => {
+                        const fieldValue = currencyField.state.value;
+                        const value =
+                          typeof fieldValue === "string"
+                            ? fieldValue
+                            : preferredCurrency || "USD";
 
-                      const numeric = Number(rawValue);
-                      overrideField.handleChange(
-                        Number.isNaN(numeric) ? overrideField.state.value : numeric
-                      );
-                    }}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.0001"
-                    min="0"
-                    aria-label="ESPP exchange rate override"
-                    placeholder="Use default"
-                  />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Optional conversion override
-                  </p>
-                </div>
-              );
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Purchase Currency
+                            </label>
+                            <Select
+                              value={value}
+                              onValueChange={(value) => {
+                                const selected = value as CurrencyCode;
+                                currencyField.handleChange(selected);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select currency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {currencyOptions.map((currency) => (
+                                  <SelectItem key={currency} value={currency}>
+                                    {currency}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                              Currency for ESPP purchases
+                            </p>
+                          </div>
+                        );
+                      }}
+                    </form.Field>
+                    <form.Field name={`esppPlans[${index}].overrideRate`}>
+                      {(overrideField: FormFieldCallback) => {
+                        const fieldValue = overrideField.state.value;
+                        const value =
+                          typeof fieldValue === "number" ||
+                          typeof fieldValue === "string"
+                            ? fieldValue
+                            : "";
+
+                        return (
+                          <div className="space-y-2">
+                            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                              Exchange Rate Override
+                            </label>
+                            <Input
+                              name={overrideField.name}
+                              value={value}
+                              onBlur={overrideField.handleBlur}
+                              onChange={(event) => {
+                                const rawValue = event.target.value;
+                                if (rawValue === "") {
+                                  overrideField.handleChange(undefined);
+                                  return;
+                                }
+
+                                const numeric = Number(rawValue);
+                                overrideField.handleChange(
+                                  Number.isNaN(numeric)
+                                    ? overrideField.state.value
+                                    : numeric,
+                                );
+                              }}
+                              type="number"
+                              inputMode="decimal"
+                              step="0.0001"
+                              min="0"
+                              aria-label="ESPP exchange rate override"
+                              placeholder="Use default"
+                            />
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                              Optional conversion override
+                            </p>
+                          </div>
+                        );
                       }}
                     </form.Field>
                   </div>

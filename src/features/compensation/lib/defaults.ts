@@ -7,10 +7,10 @@ export const getDefaultFormValues = (): CompensationFormValues => ({
       currency: "ILS",
     },
     food: {
-      amount: 1500,
+      amount: 1000,
       currency: "ILS",
     },
-    bonusPercentage: 15,
+    bonusPercentage: 10,
   },
   benefits: {
     percentage: 10,

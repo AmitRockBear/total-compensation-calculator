@@ -1,0 +1,31 @@
+# Lifeguard Custom Rules
+# Replace these examples with rules specific to your project
+# Each rule should have a clear name and detailed description
+
+rules:
+  - name: "Database transactions must be properly handled"
+    description: "Ensure all database operations are wrapped in transactions with proper rollback handling. Check that commit/rollback is called in all code paths including error scenarios."
+
+  - name: "API responses must include proper error context"
+    description: "Verify that API error responses include sufficient context for debugging (request ID, timestamp, user context) without exposing sensitive information."
+
+  - name: "Async operations should have timeout handling"
+    description: "Check that long-running async operations (API calls, database queries, file operations) include appropriate timeout mechanisms to prevent hanging requests."
+
+  - name: "Coding standards"
+    description: "JavaScript or TypeScript, must adhere to the coding standards described in owner=amit-rockach, repo=dev-guidelines, path=coding-standards.md, and ref=dev. You should use the Github Mcp, get_file_contents tool to retrieve the coding standards."
+
+  - name: "Precision"
+    description: "Fulfill all user requests and project plans completely and accurately."
+
+  - name: "Proactive Problem-Solving"
+    description: "Address the root cause of issues, not just the symptoms. If a request is ambiguous or lacks necessary information, ask for clarification."
+
+  - name: "Readability"
+    description: "Prioritize clear, readable, and maintainable code over premature optimization."
+
+  - name: "Completeness"
+    description: "All code must be fully functional and ready for production. Do not include TODO comments, placeholders, or incomplete sections."
+
+  - name: "Verification"
+    description: "Thoroughly review and test all generated code to ensure it is correct, bug-free, and secure."

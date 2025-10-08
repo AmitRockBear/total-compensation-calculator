@@ -53,7 +53,7 @@ export const TotalCompensationChart = ({
   currency,
 }: TotalCompensationChartProps) => {
   const data = [
-    { name: "Base", value: Math.round(baseAmount) },
+    { name: "Base Salary", value: Math.round(baseAmount) },
     { name: "Bonus", value: Math.round(bonusAmount) },
     { name: "Benefits", value: Math.round(benefitsAmount) },
     { name: "RSU", value: Math.round(rsuAmount) },

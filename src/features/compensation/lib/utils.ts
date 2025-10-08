@@ -1,5 +1,5 @@
-import { CurrencyCode } from "~/features/compensation/lib/constants";
-import {
+import type { CurrencyCode } from "~/features/compensation/lib/constants";
+import type {
   CompensationFormValues,
   MonetaryFieldValues,
   RsuGrantValues,
@@ -95,7 +95,14 @@ const convertField = (
   field: MonetaryFieldValues,
   target: CurrencyCode,
   rates: ExchangeRates,
-) => convertAmount(field.amount, field.currency, target, field.overrideRate, rates);
+) =>
+  convertAmount(
+    field.amount,
+    field.currency,
+    target,
+    field.overrideRate,
+    rates,
+  );
 
 const convertFieldAnnual = (
   field: MonetaryFieldValues,
@@ -157,9 +164,7 @@ const getProjectionYears = (
   schedule: Record<number, number>,
   raisesMap: Map<number, number>,
 ) => {
-  const maxRaise = raisesMap.size
-    ? Math.max(...raisesMap.keys())
-    : 0;
+  const maxRaise = raisesMap.size ? Math.max(...raisesMap.keys()) : 0;
   const rsuYears = Object.keys(schedule).length
     ? Math.max(...Object.keys(schedule).map((key) => Number(key)))
     : 0;
@@ -169,161 +174,283 @@ const getProjectionYears = (
 
 const safe = (value: number) => (Number.isFinite(value) ? value : 0);
 
+const getEsppMonthsInYear = (
+  startDate: string,
+  durationMonths: number,
+  targetYear: number,
+): number => {
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) {
+    return 0;
+  }
+
+  const startYear = start.getFullYear();
+  const startMonth = start.getMonth(); // 0-11
+  
+  // Calculate end date
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + durationMonths);
+  const endYear = end.getFullYear();
+  const endMonth = end.getMonth();
+
+  // If target year is before start or after end, no months
+  if (targetYear < startYear || targetYear > endYear) {
+    return 0;
+  }
+
+  // If plan starts and ends in target year
+  if (startYear === targetYear && endYear === targetYear) {
+    return durationMonths;
+  }
+
+  // If plan starts in target year but ends in a later year
+  if (startYear === targetYear && endYear > targetYear) {
+    return 12 - startMonth;
+  }
+
+  // If plan started before target year and ends in target year
+  if (startYear < targetYear && endYear === targetYear) {
+    return endMonth;
+  }
+
+  // If plan spans across target year (started before, ends after)
+  if (startYear < targetYear && endYear > targetYear) {
+    return 12;
+  }
+
+  return 0;
+};
+
 export const buildCompensationSummary = (
   values: CompensationFormValues,
   preferredCurrency: CurrencyCode,
   rates: ExchangeRates,
 ): CompensationSummary => {
-  const baseAnnual = convertFieldAnnual(
+  // ============================================================================
+  // STEP 1: Convert base compensation to preferred currency (without raises)
+  // ============================================================================
+  const baseAnnualRaw = convertFieldAnnual(
     values.recurring.base,
     preferredCurrency,
     rates,
   );
-  const allowancesAnnual = convertFieldAnnual(
+  const foodAllowanceAnnual = convertFieldAnnual(
     values.recurring.food,
     preferredCurrency,
     rates,
   );
-  const bonusRate = values.recurring.bonusPercentage / 100;
-  const bonusAnnual = safe(baseAnnual * bonusRate);
 
-  const benefitsBaseAnnual = convertAmount(
-    values.recurring.base.amount * 12,
-    values.recurring.base.currency,
-    values.benefits.calculationCurrency,
-    values.recurring.base.overrideRate,
-    rates,
-  );
-  const benefitsAllowanceAnnual = convertAmount(
-    values.recurring.food.amount * 12,
-    values.recurring.food.currency,
-    values.benefits.calculationCurrency,
-    values.recurring.food.overrideRate,
-    rates,
-  );
-  const benefitsRate = values.benefits.percentage / 100;
-  const benefitsValueInCalcCurrency = safe(
-    (benefitsBaseAnnual + benefitsAllowanceAnnual) * benefitsRate,
-  );
-  const benefitsAnnual = convertAmount(
-    benefitsValueInCalcCurrency,
-    values.benefits.calculationCurrency,
-    preferredCurrency,
-    undefined,
-    rates,
-  );
-
+  // ============================================================================
+  // STEP 2: Get RSU schedule and raises map
+  // ============================================================================
   const { schedule: rsuSchedule, breakdown } = getRsuSchedule(
     values.rsuGrants,
     preferredCurrency,
     rates,
   );
+  const raisesMap = buildRaisesMap(values);
+
+  // ============================================================================
+  // STEP 3: Calculate year 0 multiplier (apply raises at year 0 if any)
+  // ============================================================================
+  const year0Multiplier = raisesMap.has(0) ? 1 + (raisesMap.get(0) ?? 0) : 1;
+
+  // ============================================================================
+  // STEP 4: Calculate year 0 values (with raises applied)
+  // ============================================================================
+  const baseAnnual = safe(baseAnnualRaw * year0Multiplier);
+
+  // Bonus: percentage of raised base salary (not food allowance)
+  const bonusRate = values.recurring.bonusPercentage / 100;
+  const bonusAnnual = safe(baseAnnual * bonusRate);
+
+  // Benefits: just food allowance (and future: signing bonus, relocation, stipend)
+  // Note: benefits percentage is NOT applied here since bonus already covers salary percentage
+  const benefitsAnnual = foodAllowanceAnnual;
+
+  // RSU: year 0 value from schedule
   const rsuAnnual = rsuSchedule[0] ?? 0;
 
-  // Calculate ESPP totals from all plans
-  let esppTotalContributions = 0;
-  let esppTotalReturns = 0;
+  // ESPP: calculate contributions and returns for year 0
+  const currentYear = new Date().getFullYear();
+  let esppAnnualContributions = 0;
+  let esppAnnualReturns = 0;
 
   if (values.esppPlans && values.esppPlans.length > 0) {
     for (const plan of values.esppPlans) {
-      const baseAnnualForEspp = convertAmount(
-        values.recurring.base.amount * 12,
-        values.recurring.base.currency,
+      // Calculate how many months this plan is active in year 0
+      const monthsInYear0 = getEsppMonthsInYear(
+        plan.startDate,
+        plan.durationMonths,
+        currentYear,
+      );
+
+      if (monthsInYear0 === 0) {
+        continue;
+      }
+
+      // Convert raised base salary to purchase currency
+      const baseInPurchaseCurrency = convertAmount(
+        baseAnnual,
+        preferredCurrency,
         plan.purchaseCurrency,
-        values.recurring.base.overrideRate,
+        plan.overrideRate,
         rates,
       );
 
-      // Calculate for the plan duration (typically 6 months)
-      const durationYears = (plan.durationMonths || 6) / 12;
+      // Monthly contribution rate
       const contributionRate = plan.contributionPercentage / 100;
       const growthRate = plan.growthPercentage / 100;
-      
-      const contributionsInPurchase = safe(baseAnnualForEspp * contributionRate * durationYears);
-      const contributionsInTarget = convertAmount(
-        contributionsInPurchase,
+
+      // Contribution for the months active in year 0
+      const monthlyBaseInPurchase = baseInPurchaseCurrency / 12;
+      const contributionInPurchase = safe(
+        monthlyBaseInPurchase * contributionRate * monthsInYear0,
+      );
+
+      // Convert to preferred currency
+      const contributionInPreferred = convertAmount(
+        contributionInPurchase,
         plan.purchaseCurrency,
         preferredCurrency,
         plan.overrideRate,
         rates,
       );
-      const returnsInTarget = safe(contributionsInTarget * growthRate);
 
-      esppTotalContributions += contributionsInTarget;
-      esppTotalReturns += returnsInTarget;
+      // Calculate returns (gain from discount/growth)
+      const returnsInPreferred = safe(contributionInPreferred * growthRate);
+
+      esppAnnualContributions += contributionInPreferred;
+      esppAnnualReturns += returnsInPreferred;
     }
   }
 
   const espp: EsppSummary = {
-    enabled: esppTotalContributions > 0,
-    contributions: esppTotalContributions,
-    returns: esppTotalReturns,
+    enabled: esppAnnualContributions > 0,
+    contributions: esppAnnualContributions,
+    returns: esppAnnualReturns,
   };
 
-  const recurringTotal = safe(baseAnnual + allowancesAnnual);
+  // ============================================================================
+  // STEP 5: Calculate totals for year 0
+  // ============================================================================
+  // ESPP contributions come out of base salary, so we deduct them
+  const baseAfterEspp = safe(baseAnnual - espp.contributions);
+  const esppTotal = safe(espp.contributions + espp.returns);
+  
   const annualTotal = safe(
-    recurringTotal +
+    baseAfterEspp +
       bonusAnnual +
       benefitsAnnual +
       rsuAnnual +
-      espp.contributions +
-      espp.returns,
+      esppTotal, // Total ESPP value (contributions + gains)
   );
   const monthlyTotal = annualTotal / 12;
 
+  // ============================================================================
+  // STEP 6: Build distribution (year 0 values)
+  // ============================================================================
   const distribution: DistributionItem[] = [
-    { label: "Base + Allowances", value: recurringTotal },
+    { label: "Base Salary", value: baseAfterEspp },
     { label: "Bonus", value: bonusAnnual },
     { label: "Benefits", value: benefitsAnnual },
     { label: "RSUs", value: rsuAnnual },
-    { label: "ESPP", value: espp.contributions + espp.returns },
+    { label: "ESPP", value: esppTotal },
   ];
 
-  const raisesMap = buildRaisesMap(values);
+  // ============================================================================
+  // STEP 7: Build timeline for all projection years
+  // ============================================================================
   const projectionYears = getProjectionYears(rsuSchedule, raisesMap);
-
   const timeline: TimelinePoint[] = [];
   let cumulativeMultiplier = 1;
-  const baseAnnualSafe = baseAnnual || 1;
 
   for (let year = 0; year < projectionYears; year += 1) {
-    if (year > 0 && raisesMap.has(year)) {
+    // Apply raises: at year 0, apply year 0 raise; at year N, apply year N raise
+    if (raisesMap.has(year)) {
       cumulativeMultiplier *= 1 + (raisesMap.get(year) ?? 0);
     }
 
-    const baseYear = safe(baseAnnual * cumulativeMultiplier);
-    const allowancesYear = safe(allowancesAnnual * cumulativeMultiplier);
+    // Base salary with cumulative raises (food allowance does NOT get raises)
+    const baseYear = safe(baseAnnualRaw * cumulativeMultiplier);
     const bonusYear = safe(baseYear * bonusRate);
-    const benefitsYear = safe(
-      (baseYear + allowancesYear) * benefitsRate,
-    );
+
+    // Benefits: just food allowance (constant, no raises)
+    const benefitsYear = foodAllowanceAnnual;
+
+    // RSU: from schedule
     const rsuYear = rsuSchedule[year] ?? 0;
 
-    let esppYear = 0;
-    if (espp.enabled) {
-      const proportion = baseAnnualSafe ? baseYear / baseAnnualSafe : 1;
-      const contributionsYear = espp.contributions * proportion;
-      const returnsYear = espp.returns * proportion;
-      esppYear = contributionsYear + returnsYear;
+    // ESPP: calculate for this specific year based on plan dates
+    let esppContributionsYear = 0;
+    let esppReturnsYear = 0;
+    const targetYear = currentYear + year;
+
+    if (values.esppPlans && values.esppPlans.length > 0) {
+      for (const plan of values.esppPlans) {
+        const monthsInTargetYear = getEsppMonthsInYear(
+          plan.startDate,
+          plan.durationMonths,
+          targetYear,
+        );
+
+        if (monthsInTargetYear === 0) {
+          continue;
+        }
+
+        // Convert raised base salary to purchase currency
+        const baseYearInPurchaseCurrency = convertAmount(
+          baseYear,
+          preferredCurrency,
+          plan.purchaseCurrency,
+          plan.overrideRate,
+          rates,
+        );
+
+        const contributionRate = plan.contributionPercentage / 100;
+        const growthRate = plan.growthPercentage / 100;
+
+        // Contribution for the months active in this year
+        const monthlyBaseInPurchase = baseYearInPurchaseCurrency / 12;
+        const contributionInPurchase = safe(
+          monthlyBaseInPurchase * contributionRate * monthsInTargetYear,
+        );
+
+        const contributionInPreferred = convertAmount(
+          contributionInPurchase,
+          plan.purchaseCurrency,
+          preferredCurrency,
+          plan.overrideRate,
+          rates,
+        );
+
+        const returnsInPreferred = safe(contributionInPreferred * growthRate);
+
+        esppContributionsYear += contributionInPreferred;
+        esppReturnsYear += returnsInPreferred;
+      }
     }
 
+    // Deduct ESPP contributions from base salary
+    const baseYearAfterEspp = safe(baseYear - esppContributionsYear);
+    const esppTotalYear = safe(esppContributionsYear + esppReturnsYear);
+
     const totalYear = safe(
-      baseYear +
-        allowancesYear +
+      baseYearAfterEspp +
         bonusYear +
         benefitsYear +
         rsuYear +
-        esppYear,
+        esppTotalYear, // Total ESPP (contributions + gains)
     );
 
     timeline.push({
       year,
-      base: baseYear,
-      allowances: allowancesYear,
+      base: baseYearAfterEspp,
+      allowances: foodAllowanceAnnual,
       bonus: bonusYear,
       benefits: benefitsYear,
       rsu: rsuYear,
-      espp: esppYear,
+      espp: esppTotalYear,
       total: totalYear,
     });
   }
@@ -333,8 +460,8 @@ export const buildCompensationSummary = (
     totals: {
       annual: annualTotal,
       monthly: monthlyTotal,
-      base: baseAnnual,
-      allowances: allowancesAnnual,
+      base: baseAfterEspp,
+      allowances: foodAllowanceAnnual,
       bonus: bonusAnnual,
       benefits: benefitsAnnual,
       rsuAnnual,
